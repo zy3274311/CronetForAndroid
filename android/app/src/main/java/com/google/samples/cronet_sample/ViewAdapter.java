@@ -20,7 +20,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,7 +53,6 @@ public class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ViewHolder> {
     public ViewAdapter(Context context) {
         this.context = context;
         getCronetEngine(context);
-        startNetLog();
     }
 
     @Override
@@ -85,6 +86,18 @@ public class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ViewHolder> {
         // Start the request
         builder.build().start();
 
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        startNetLog();
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        stopNetLog();
     }
 
     /**
@@ -122,7 +135,7 @@ public class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ViewHolder> {
         @Override
         public void onReadCompleted(
                 UrlRequest request, UrlResponseInfo info, ByteBuffer byteBuffer) {
-            android.util.Log.i(TAG, "****** onReadCompleted ******" + byteBuffer);
+            android.util.Log.i(TAG, "****** onReadCompleted ******");
             byteBuffer.flip();
             try {
                 receiveChannel.write(byteBuffer);
@@ -151,9 +164,12 @@ public class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ViewHolder> {
             final Bitmap bimage = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
             mainActivity.runOnUiThread(new Runnable() {
                 public void run() {
-                    imageView.setImageBitmap(bimage);
-                    imageView.getLayoutParams().height = bimage.getHeight();
-                    imageView.getLayoutParams().width = bimage.getWidth();
+                    if(bimage!=null){
+                        Log.e("MyCallback", "getNegotiatedProtocol. "+info.getNegotiatedProtocol());
+                        imageView.setImageBitmap(bimage);
+                        imageView.getLayoutParams().height = bimage.getHeight();
+                        imageView.getLayoutParams().width = bimage.getWidth();
+                    }
                 }
             });
         }
@@ -180,6 +196,8 @@ public class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ViewHolder> {
                     .enableHttp2(true)
                     .enableQuic(true)
                     .build();
+
+            Log.e("MyCallback", "getVersionString. "+cronetEngine.getVersionString());
         }
         return cronetEngine;
     }
@@ -190,11 +208,19 @@ public class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ViewHolder> {
     private void startNetLog() {
         File outputFile;
         try {
-            outputFile = File.createTempFile("cronet", "log",
-                    Environment.getExternalStorageDirectory());
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/cronetLog");
+            if(!dir.exists()){
+                dir.mkdirs();
+            }
+            outputFile = File.createTempFile("cronet", "log.json", dir);
             cronetEngine.startNetLogToFile(outputFile.toString(), false);
+            Log.e("MyCallback", "outputFile. "+outputFile.toString());
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void stopNetLog() {
+        cronetEngine.stopNetLog();
     }
 }

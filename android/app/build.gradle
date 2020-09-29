@@ -1,8 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 27
-    buildToolsVersion "27.0.3"
+    compileSdkVersion 30
+    buildToolsVersion "30.0.0"
 
     // Cronet jars contain Java 8 bytecode.
     compileOptions {
@@ -12,11 +12,15 @@ android {
 
     defaultConfig {
         applicationId "com.google.samples.cronet_sample"
-        minSdkVersion 16
-        targetSdkVersion 27
+        minSdkVersion 17
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
     }
     buildTypes {
         release {
@@ -32,6 +36,7 @@ ext {
 }
 
 dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "com.google.android.gms:play-services-cronet:16.0.0"
     implementation "com.android.support:appcompat-v7:${supportLibVersion}"
     implementation "com.android.support:recyclerview-v7:${supportLibVersion}"
@@ -39,5 +44,7 @@ dependencies {
     androidTestImplementation "com.android.support.test:runner:${androidTestVersion}"
     androidTestImplementation "com.android.support.test:rules:${androidTestVersion}"
     androidTestImplementation "com.android.support.test.espresso:espresso-core:3.0.2"
+//    implementation project(path: ':cronetlibrary')
 
+    implementation 'com.facebook.stetho:stetho:1.5.1'
 }
